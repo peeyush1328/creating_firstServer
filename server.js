@@ -1,63 +1,36 @@
-const http = require("http");
+const express = require("express");
 const port = 8080;
-
+const app = express();
 const todolist = ["cricket", "football", "baseball"];
+app.use(express.json());
 
-http
-  .createServer((req, res) => {
-    const { method, url } = req;
-    if (url === "/list") {
-      if (method === "GET") {
-        res.writeHead(200, { "content-type": "text/html" });
-        res.write(todolist.toString());
-        console.log(todolist);
-      } else if (method === "POST") {
-        let body = "";
-        req
-          .on("error", (err) => {
-            console.error(err);
-          })
-          .on("data", (chunks) => {
-            body = body + chunks;
-          })
-          .on("end", () => {
-            body = JSON.parse(body);
-            let newtodo = todolist;
-            newtodo.push(body.item);
-            console.log(newtodo);
-            res.writeHead(201);
-          });
-      } else if (method === "DELETE") {
-        let body = "";
-        req
-          .on("error", (err) => {
-            console.error(err);
-          })
-          .on("data", (chunks) => {
-            body = body + chunks;
-          })
-          .on("end", () => {
-            body = JSON.parse(body);
-            let deletethis = body.item;
-            todolist.find((element, index) => {
-              if (element === deletethis) {
-                todolist.splice(index, 1);
-              }
-            });
-            // for (let i = 0; i < todolist.length; i++) {
-            //   if (todolist[i] === deletethis) {
-            //     todolist.splice(i, 1);
-            //   }
-            // }
-            res.writeHead(201);
-          });
-      }
-    } else {
-      res.writeHead(404);
-    }
-    res.end();
-  })
-
-  .listen(port, () => {
-    console.log(`node.js server port: ${port}`);
+app.get("/list", (req, res) => {
+  res.status(200).send(todolist);
+});
+app.post("/list", (req, res) => {
+  let newtodo = req.body.item;
+  todolist.push(newtodo);
+  res.status(200).send({
+    message: "task added successfully",
   });
+});
+app.delete("/list", (req, res) => {
+  let deletethis = req.body.item;
+  todolist.find((element, index) => {
+    if (element === deletethis) {
+      todolist.splice(index, 1);
+    }
+  });
+  res.status(200).send({
+    message: "task deleted succesfully",
+  });
+});
+app.all("/list", (req, res) => {
+  res.status(501).send();
+});
+app.all("*", (req, res) => {
+  res.status(404).send();
+});
+app.listen(port, () => {
+  console.log(`node.js server started :${port}`);
+});
